@@ -1,21 +1,30 @@
-import mysql.connector
-from dotenv import load_dotenv
-import os
+from sql_connection import get_sql_connection
 
-load_dotenv()
+def get_all_products(connection) -> list:
+    cursor = connection.cursor()
 
-cnx = mysql.connector.connect(
-                            user = os.getenv("DB_USER"), password= os.getenv('DB_PW'),
-                            host = os.getenv('DB_HOST'),
-                            database = os.getenv('DB_NAME')
-                            )
-cursor = cnx.cursor()
+    query = """
+            SELECT p.product_id, p.name, u.uom_name, p.price_per_unit
+                FROM products AS p 
+                INNER JOIN uom AS u 
+                ON p.uom_id = u.uom_id;
+            """
+    cursor.execute(query)
 
-query = "SELECT * FROM grocery_store.products"
+    response = []
 
-cursor.execute(query)
+    for (product_id, name, uom, price_per_unit) in cursor:
+        response.append(
+            {
+                'product_id': product_id,
+                'name': name,
+                'uom_name': uom,
+                'price_per_unit': price_per_unit
+            }
+        )
 
-for (product_id, name, uom_id, price_per_unit) in cursor:
-    print(product_id, name, uom_id, price_per_unit)
+    return response
 
-cnx.close()
+if __name__ == '__main__':
+    connection = get_sql_connection()
+    print(get_all_products(connection))
